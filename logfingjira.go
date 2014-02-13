@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"code.google.com/p/go.crypto/ssh/terminal"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"os"
@@ -19,7 +20,14 @@ func main() {
 	if len(*pass) == 0 {
 		pass = fetchPass()
 	}
-	fmt.Println(*username, *pass)
+	authorizationCode := authorizationCode(username, pass)
+	fmt.Println(*username, *pass, authorizationCode)
+}
+
+func authorizationCode(username, pass *string) string {
+	unamePassByte := []byte(*username + ":" + *pass)
+	unamePass := base64.StdEncoding.EncodeToString(unamePassByte)
+	return unamePass
 }
 
 func fetchPass() *string {
