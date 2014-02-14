@@ -20,12 +20,14 @@ func main() {
 	if len(*pass) == 0 {
 		pass = fetchPass()
 	}
-	authorizationCode := authorizationCode(username, pass)
-	fmt.Println(*username, *pass, authorizationCode)
+	authorizationCode := authorizationCode(*username, *pass)
+	fmt.Println(authorizationCode)
+	jiraClientObj := jiraClient{UserName: *username, Pass: *pass, Url: "https://ymedialabs.atlassian.net/"}
+	jiraClientObj.getIssues()
 }
 
-func authorizationCode(username, pass *string) string {
-	unamePassByte := []byte(*username + ":" + *pass)
+func authorizationCode(username, pass string) string {
+	unamePassByte := []byte(username + ":" + pass)
 	unamePass := base64.StdEncoding.EncodeToString(unamePassByte)
 	return unamePass
 }
