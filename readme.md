@@ -17,7 +17,7 @@ Set the environment variables as follows -
 
 ### Flags
 + m - The jira log message flag.
-+ d - The Jira interval (e.g 1h, 1d, etc) flag.
++ d - The Jira interval/duration (e.g 1h, 1d, etc) flag.
 + i - The Jira issue key (e.g AAP-420) flag.
 
 ###Example Usage
