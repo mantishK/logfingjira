@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -15,12 +17,12 @@ type jiraClient struct {
 	AuthorizationCode string
 }
 
-func (jClient *jiraClient) callJiraAPI(apiName string, mothod string, urlParams map[string]string) {
+func (jClient *jiraClient) callJiraAPI(apiName string, method string, urlParams, postparams map[string]string) []byte {
 	if len(jClient.AuthorizationCode) == 0 {
 		jClient.AuthorizationCode = authorizationCode(jClient.UserName, jClient.Pass)
 	}
 
-	resource := "/rest/api/" + apiName
+	resource := "/rest/api/latest/" + apiName
 	data := url.Values{}
 
 	//set url parameters
@@ -32,29 +34,50 @@ func (jClient *jiraClient) callJiraAPI(apiName string, mothod string, urlParams 
 	u.Path = resource
 	u.RawQuery = data.Encode()
 	urlStr := fmt.Sprintf("%v", u) // "https://api.com/user/?name=foo&surname=bar"
-	fmt.Println(u)
 
 	client := &http.Client{}
-	r, _ := http.NewRequest(mothod, urlStr, nil)
+
+	postparamsByte, err := json.Marshal(postparams)
+	if err != nil {
+		panic("json parse error")
+	}
+	postParamsReader := bytes.NewReader(postparamsByte)
+	r, _ := http.NewRequest(method, urlStr, postParamsReader)
 	r.Header.Add("Authorization", "Basic "+jClient.AuthorizationCode)
-	r.Header.Add("Content-Type", "application/json")
-	r.Header.Add("Accept", "application/json")
+	r.Header.Add("Content-Type", "Application/json")
+	r.Header.Add("Accept", "Application/json")
 	r.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 	resp, _ := client.Do(r)
-	fmt.Println(resp.Status)
-	robots, _ := ioutil.ReadAll(resp.Body)
+	respByte, _ := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
-	fmt.Printf("%s", robots)
+	return respByte
 }
 
 func (jClient *jiraClient) getIssues() {
 	params := make(map[string]string)
 	params["jql"] = "assignee=\"" + jClient.UserName + "\" and status = \"open\""
-	jClient.callJiraAPI("latest/search", "GET", params)
+	responseByte := jClient.callJiraAPI("latest/search", "GET", params, nil)
+	var responseInterface interface{}
+	err := json.Unmarshal(responseByte, &responseInterface)
+	if err != nil {
+		fmt.Println("Some error occured")
+	} else {
+		fmt.Println(responseInterface)
+	}
 }
 
-func (jiraClient *jiraClient) logHours(issue string, message string, duration int) {
-	params := make(map[string]string)
-	params["jql"] = "assignee=\"" + jClient.UserName + "\" and status = \"open\""
-	jClient.callJiraAPI("issue/"+issue+"/worklog", "POST", params)
+func (jClient *jiraClient) logHours(issue string, message string, duration string) {
+	postParams := make(map[string]string)
+	postParams["timeSpent"] = duration
+	postParams["comment"] = message
+	responseByte := jClient.callJiraAPI("issue/"+issue+"/worklog", "POST", nil, postParams)
+	var responseInterface map[string]interface{}
+	err := json.Unmarshal(responseByte, &responseInterface)
+	if err != nil {
+		fmt.Println("Some error occured")
+	} else {
+		id, _ := responseInterface["id"].(string)
+		fmt.Println("Successfully created the worklog to impress your manager. \nWorklog id = " + id)
+	}
+
 }
