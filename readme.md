@@ -7,7 +7,8 @@ A simple Jira work-logging CLI tool written in go-lang.
 ##Installation 
 + Install go, get the detailed documentation for installation [here](http://golang.org/doc/install).
 + make sure GOPATH and GOROOT environment variables are set correctly.
-+ type ```go install github.com/mantishK/logfingjira``` on your terminal.
++ ```go get github.com/mantishK/logfingjira``` 
++ ```go install github.com/mantishK/logfingjira```
 
 ##Documentation
 Set the environment variables as follows to make the tool stop asking username and company name each time - 
